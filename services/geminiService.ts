@@ -92,7 +92,9 @@ export const generateQuiz = async (topic: string, description: string): Promise<
       
       YÊU CẦU ĐẶC BIỆT VỀ FORMAT TOÁN HỌC:
       - Sử dụng định dạng LaTeX đặt trong dấu $ cho tất cả các công thức toán học.
-      - Ví dụ: "Tính $\\frac{1}{2} + \\frac{3}{4}$" hoặc "Cho tam giác $\\Delta ABC$ vuông tại $A$".
+      - Với phân số: dùng $\\frac{a}{b}$.
+      - Với độ C (nhiệt độ): dùng cú pháp $30^\\circ C$ hoặc $30\\degree C$.
+      - Ví dụ: "Tính $\\frac{1}{2} + \\frac{3}{4}$" hoặc "Nhiệt độ là $25^\\circ C$".
       - Không dùng văn bản thường cho các ký hiệu toán học.
       
       Cấu trúc đề BẮT BUỘC như sau (Tổng 10 điểm):
@@ -104,7 +106,7 @@ export const generateQuiz = async (topic: string, description: string): Promise<
          
       2. Phần 2: Đúng/Sai (4.0 điểm).
          - 4 câu hỏi lớn. Mỗi câu hỏi lớn gồm 1 đề dẫn và 4 ý con (a,b,c,d).
-         - Yêu cầu: Đề dẫn phải là một TÌNH HUỐNG THỰC TẾ (ví dụ: lãi suất ngân hàng, đo đạc đất đai, tỉ lệ bản đồ, xác suất gieo xúc xắc...).
+         - Yêu cầu: Đề dẫn phải là một TÌNH HUỐNG THỰC TẾ (ví dụ: lãi suất ngân hàng, đo đạc đất đai, tỉ lệ bản đồ, nhiệt độ môi trường...).
          - Mỗi ý con đúng được 0.25đ. Tổng 16 ý con.
          - Kèm theo giải thích cho từng ý (explanation) có sử dụng LaTeX.
          
@@ -125,7 +127,7 @@ export const generateQuiz = async (topic: string, description: string): Promise<
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
-        systemInstruction: "Bạn là chuyên gia soạn đề Toán 7. Trả về JSON hợp lệ. Sử dụng LaTeX ($...$) cho công thức toán.",
+        systemInstruction: "Bạn là chuyên gia soạn đề Toán 7. Trả về JSON hợp lệ. Sử dụng LaTeX ($...$) cho công thức toán. Với độ C dùng $^\\circ C$.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -296,8 +298,9 @@ export const getChatResponse = async (history: Content[], newMessage: string): P
           Nhiệm vụ của bạn:
           1. Giải đáp thắc mắc về Toán học lớp 7.
           2. Nếu học sinh hỏi đáp án bài tập, KHÔNG ĐƯỢC trả lời ngay kết quả. Hãy gợi ý từng bước.
-          3. SỬ DỤNG LATEX ($...$) cho mọi công thức toán học (phân số, số mũ, độ, ...).
-          4. Luôn khích lệ, động viên tinh thần học tập.
+          3. SỬ DỤNG LATEX ($...$) cho mọi công thức toán học (phân số, số mũ, độ C, ...).
+          4. Với độ C (nhiệt độ), hãy dùng $30^\\circ C$ thay vì $30\\degree C$.
+          5. Luôn khích lệ, động viên tinh thần học tập.
           
           Lưu ý: Giữ câu trả lời ngắn gọn, súc tích (dưới 150 từ).
         `

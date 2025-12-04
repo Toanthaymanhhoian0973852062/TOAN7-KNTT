@@ -20,12 +20,22 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ text, className = ''
           return <span key={index}>{part}</span>;
         } else {
           try {
-            const html = katex.renderToString(part, {
+            // Pre-process common errors
+            // Replace raw unicode degree symbol inside math mode if present
+            let cleanPart = part.replace(/°/g, '^\\circ');
+
+            const html = katex.renderToString(cleanPart, {
               throwOnError: false,
               displayMode: false, // Inline mode
               output: 'html',
               trust: true,
               globalGroup: true,
+              // Add macros for common missing commands
+              macros: {
+                "\\degree": "^\\circ",
+                "\\celsius": "^\\circ\\text{C}",
+                "\\deg": "^\\circ"
+              }
             });
             
             return (
@@ -34,7 +44,6 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ text, className = ''
                 className="inline-block px-0.5 align-middle max-w-full overflow-x-auto overflow-y-hidden no-scrollbar"
                 dangerouslySetInnerHTML={{ __html: html }}
                 style={{
-                  // Ensure math is slightly scaled for readability but doesn't break flow
                   fontSize: '1.1em', 
                 }}
               />
