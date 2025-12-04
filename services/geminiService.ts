@@ -3,11 +3,39 @@ import { QuizData, MathNews } from "../types";
 
 let genAIInstance: GoogleGenAI | null = null;
 
+// Helper function to safely retrieve API Key in both Vite (client) and Node (server) environments
+const getApiKey = (): string => {
+  try {
+    // Priority 1: Vite Environment Variable (Vercel)
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+      // @ts-ignore
+      return import.meta.env.VITE_API_KEY;
+    }
+  } catch (e) {}
+
+  try {
+    // Priority 2: Process Environment Variable (Node/System)
+    // @ts-ignore
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      // @ts-ignore
+      return process.env.API_KEY;
+    }
+  } catch (e) {}
+
+  return "";
+};
+
 const getAI = () => {
   if (genAIInstance) return genAIInstance;
 
-  // The API key must be obtained exclusively from the environment variable process.env.API_KEY
-  genAIInstance = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    console.error("CRITICAL ERROR: API Key is missing. Please check VITE_API_KEY in Vercel settings.");
+    throw new Error("Chưa cấu hình API Key. Vui lòng kiểm tra biến môi trường VITE_API_KEY.");
+  }
+
+  genAIInstance = new GoogleGenAI({ apiKey });
   return genAIInstance;
 };
 
@@ -40,17 +68,20 @@ const FALLBACK_NEWS_ITEMS: MathNews[] = [
   }
 ];
 
-// Clean JSON string from Markdown code blocks often returned by LLMs
+// Robust JSON cleaner to extract JSON object from mixed text response
 const cleanJsonString = (str: string): string => {
   if (!str) return "{}";
-  let cleaned = str.trim();
-  // Remove ```json and ``` wrapping
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```/, '').replace(/```$/, '');
+  
+  // Find the first '{' and last '}' to isolate the JSON object
+  const firstOpen = str.indexOf('{');
+  const lastClose = str.lastIndexOf('}');
+  
+  if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+    return str.substring(firstOpen, lastClose + 1);
   }
-  return cleaned.trim();
+  
+  // Fallback cleanup if structure is messy
+  return str.replace(/```json/g, '').replace(/```/g, '').trim();
 };
 
 export const generateQuiz = async (topic: string, description: string): Promise<QuizData> => {
@@ -158,12 +189,17 @@ export const generateQuiz = async (topic: string, description: string): Promise<
     });
 
     if (response.text) {
-      return JSON.parse(cleanJsonString(response.text)) as QuizData;
+      const parsed = JSON.parse(cleanJsonString(response.text));
+      return parsed as QuizData;
     }
-    throw new Error("Không nhận được dữ liệu từ Gemini");
+    throw new Error("Không nhận được dữ liệu từ Gemini (Empty Response)");
 
-  } catch (error) {
-    console.error("Lỗi tạo đề:", error);
+  } catch (error: any) {
+    console.error("Lỗi tạo đề chi tiết:", error);
+    // Propagate specific error messages for UI handling
+    if (error.message && (error.message.includes("API Key") || error.message.includes("403"))) {
+       throw new Error("Lỗi API Key: Vui lòng kiểm tra cấu hình VITE_API_KEY.");
+    }
     throw error;
   }
 };

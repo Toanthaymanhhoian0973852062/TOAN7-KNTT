@@ -80,9 +80,14 @@ export default function App() {
     } catch (err: any) {
       console.error(err);
       let errorMessage = "Không thể tạo đề thi. Vui lòng thử lại sau.";
+      
+      // Improve error messaging for user
       if (err.message && err.message.includes("quota")) {
         errorMessage = "Hệ thống AI đang hết hạn mức phục vụ. Vui lòng quay lại sau 1-2 phút.";
+      } else if (err.message && (err.message.includes("API Key") || err.message.includes("VITE_API_KEY"))) {
+        errorMessage = "Lỗi Cấu Hình: Chưa tìm thấy VITE_API_KEY trong cài đặt Vercel.";
       }
+      
       setError(errorMessage);
       setScreen(AppScreen.DASHBOARD);
     }
@@ -208,8 +213,12 @@ export default function App() {
             </div>
 
             {error && (
-              <div className="bg-rose-50 text-rose-600 px-4 py-3 rounded-2xl border border-rose-100 flex items-center gap-3 font-medium text-sm animate-in fade-in slide-in-from-top-2">
-                 <AlertCircle className="w-5 h-5 shrink-0" /> {error}
+              <div className="bg-rose-50 text-rose-600 px-4 py-4 rounded-2xl border border-rose-100 flex items-start gap-3 font-medium text-sm animate-in fade-in slide-in-from-top-2 shadow-sm">
+                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" /> 
+                 <div>
+                   <span className="font-bold block mb-1">Đã xảy ra lỗi!</span>
+                   {error}
+                 </div>
               </div>
             )}
 
